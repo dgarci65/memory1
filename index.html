@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Joc de Memòria de Síl·labes</title>
+    <style>
+        :root {
+            --bg-color: #f0fdf4;
+            --card-back: #2563eb;
+            --card-front: #ffffff;
+            --success-color: #22c55e;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #1e40af;
+            margin-bottom: 20px;
+            font-size: 2rem;
+        }
+
+        .game-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 15px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .card {
+            aspect-ratio: 1 / 1;
+            perspective: 1000px;
+            cursor: pointer;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .card.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            font-size: 2.5rem;
+            font-weight: bold;
+            border: 4px solid white;
+        }
+
+        /* Revers clàssic (blau amb patró) */
+        .card-back {
+            background-color: var(--card-back);
+            background-image: radial-gradient(circle, #3b82f6 20%, transparent 20%);
+            background-size: 20px 20px;
+            color: white;
+        }
+
+        /* Cara de la carta */
+        .card-front {
+            background-color: var(--card-front);
+            color: #1e293b;
+            transform: rotateY(180deg);
+        }
+
+        .matched .card-inner {
+            box-shadow: 0 0 15px var(--success-color);
+        }
+
+        #message {
+            margin-top: 30px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--success-color);
+            height: 40px;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 10px 25px;
+            font-size: 1.2rem;
+            background-color: #1e40af;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background-color: #1d4ed8;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Joc de Síl·labes</h1>
+
+    <div class="game-container" id="grid"></div>
+
+    <div id="message"></div>
+
+    <button onclick="resetGame()">Tornar a començar</button>
+
+    <script>
+        const syllables = ['MA', 'SE', 'LA', 'UN', 'PE'];
+        let cards = [...syllables, ...syllables];
+        let flippedCards = [];
+        let matchedPairs = 0;
+        let canClick = true;
+
+        const grid = document.getElementById('grid');
+        const message = document.getElementById('message');
+
+        function shuffle(array) {
+            return array.sort(() => Math.random() - 0.5);
+        }
+
+        function createBoard() {
+            grid.innerHTML = '';
+            message.textContent = '';
+            matchedPairs = 0;
+            const shuffledCards = shuffle(cards);
+
+            shuffledCards.forEach((syllable, index) => {
+                const card = document.createElement('div');
+                card.classList.add('card');
+                card.dataset.value = syllable;
+                
+                card.innerHTML = `
+                    <div class="card-inner">
+                        <div class="card-back">?</div>
+                        <div class="card-front">${syllable}</div>
+                    </div>
+                `;
+
+                card.addEventListener('click', flipCard);
+                grid.appendChild(card);
+            });
+        }
+
+        function flipCard() {
+            if (!canClick || this.classList.contains('flipped') || this.classList.contains('matched')) return;
+
+            this.classList.add('flipped');
+            flippedCards.push(this);
+
+            if (flippedCards.length === 2) {
+                checkMatch();
+            }
+        }
+
+        function checkMatch() {
+            canClick = false;
+            const [card1, card2] = flippedCards;
+
+            if (card1.dataset.value === card2.dataset.value) {
+                card1.classList.add('matched');
+                card2.classList.add('matched');
+                matchedPairs++;
+                flippedCards = [];
+                canClick = true;
+
+                if (matchedPairs === syllables.length) {
+                    message.textContent = "✨ Molt bé! Les has trobat totes! ✨";
+                }
+            } else {
+                setTimeout(() => {
+                    card1.classList.remove('flipped');
+                    card2.classList.remove('flipped');
+                    flippedCards = [];
+                    canClick = true;
+                }, 1000);
+            }
+        }
+
+        function resetGame() {
+            createBoard();
+        }
+
+        // Iniciar el joc per primer cop
+        createBoard();
+    </script>
+</body>
+</html>
